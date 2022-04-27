@@ -1,4 +1,5 @@
 import os, sys, ljqpy, json
+import time
 from collections import defaultdict
 from tqdm import tqdm
 from config import *
@@ -6,10 +7,9 @@ from config import *
 
 def Rules1_Supp(name, fn, onum=0):
     '''
-        A,B,C -> A,D,E
+        (s, p, o) ->(s, p1, o1)
     '''
 
-    # 第一次遍历，获取三元组，并统计每一个object对象的出现次数
     onums = defaultdict(int)
     GetSPO = Config.parse_triple_function(name)
     for ii, zz in tqdm(enumerate(ljqpy.LoadListg(fn))):
@@ -22,8 +22,6 @@ def Rules1_Supp(name, fn, onum=0):
     supports = {}
     lasts = ''
     striples = set()
-    # 第二次遍历，生成规则,保存规则
-    # ii为下标，zz = 'gt（燃气轮机）	采用	等压开式循环'
     for ii, zz in tqdm(enumerate(ljqpy.LoadListg(fn))):
 
         try:
@@ -31,14 +29,14 @@ def Rules1_Supp(name, fn, onum=0):
         except:
             continue
         if s != lasts:
-            # 循环遍历
             for _, b, c in striples:
                 for _, d, e in striples:
                     if (b, c) == (d, e): continue  # 如果
                     supports[(b, c, d, e)] = supports.get((b, c, d, e), 0) + 1
             striples = set()
-        # if onums[o] > 20: #只考虑o出现次数大于20的三元组
-        striples.add((s, p, o))
+        # if onums[o] > 50:
+        if onums[o] > onum:
+            striples.add((s, p, o))
         lasts = s
         if len(supports) > 30000 and (ii % 1000000 == 0 or len(supports) > 4000000):
             print('make rule list ...', ii, len(supports))
@@ -53,7 +51,7 @@ def Rules1_Supp(name, fn, onum=0):
 
 
 def Rules1_Conf(name, fn):
-    # 规则
+
     GetSPO = Config.parse_triple_function(name)
     rules = {eval(x): y for x, y in ljqpy.LoadCSV('./rule/%s/rules_1_%s.txt' % (name, name))}
     eles = {(x[0], x[1]) for x in rules}
@@ -103,10 +101,9 @@ def Rules1_Conf(name, fn):
 
 def Rules2_Supp(name, fn, onum=0):
     '''
-        A,B,x -> A,D,E
+        (s, p, x) ->(s, p1, o1)
     '''
 
-    # 第一次遍历，获取三元组，并统计每一个object对象的出现次数
     onums = defaultdict(int)
     GetSPO = Config.parse_triple_function(name)
     for ii, zz in tqdm(enumerate(ljqpy.LoadListg(fn))):
@@ -119,22 +116,19 @@ def Rules2_Supp(name, fn, onum=0):
     supports = {}
     lasts = ''
     striples = set()
-    # 第二次遍历，生成规则,保存规则
-    # ii为下标，zz = 'gt（燃气轮机）	采用	等压开式循环'
     for ii, zz in tqdm(enumerate(ljqpy.LoadListg(fn))):
         try:
             s, p, o = GetSPO(zz)
         except:
             continue
         if s != lasts:
-            # 循环遍历
             for _, b, c in striples:
                 for _, d, e in striples:
                     if (b, c) == (d, e): continue
                     x = 'x'
                     supports[(b, x, d, e)] = supports.get((b, x, d, e), 0) + 1
             striples = set()
-        if onums[o] > onum:  # 只考虑o出现次数大于self.onum的三元组
+        if onums[o] > onum:
             striples.add((s, p, o))
         lasts = s
         if len(supports) > 30000 and (ii % 1000000 == 0 or len(supports) > 4000000):
@@ -147,7 +141,7 @@ def Rules2_Supp(name, fn, onum=0):
     rules = ljqpy.FreqDict2List(supports)
     rules = [x for x in rules if x[1] > 1][:20000]
     ljqpy.SaveCSV(rules, './rule/%s/rules_2_%s.txt' % (name, name))
-    # ignore the last entity
+
 
 
 def Rules2_Conf(name, fn):
@@ -202,9 +196,8 @@ def Rules2_Conf(name, fn):
 
 def Rules3_Supp(name, fn, onum=0):
     '''
-        A,B,x -> A,D,E
+        (s, p1, o1)(s, p2, o2) ->(s, p3, o3)
     '''
-    # 第一次遍历，获取三元组，并统计每一个object对象的出现次数
     onums = defaultdict(int)
     GetSPO = Config.parse_triple_function(name)
     for ii, zz in tqdm(enumerate(ljqpy.LoadListg(fn))):
@@ -217,8 +210,6 @@ def Rules3_Supp(name, fn, onum=0):
     supports = {}
     lasts = ''
     striples = set()
-    # 第二次遍历，生成规则,保存规则
-    # ii为下标，zz = 'gt（燃气轮机）	采用	等压开式循环'
     for ii, zz in tqdm(enumerate(ljqpy.LoadListg(fn))):
         try:
             s, p, o = GetSPO(zz)
@@ -227,7 +218,6 @@ def Rules3_Supp(name, fn, onum=0):
 
         if s != lasts or len(striples) >= 50:
 
-            # 循环遍历
             for _, b, c in striples:
                 for _, d, e in striples:
                     if (b, c) == (d, e): continue
@@ -237,7 +227,7 @@ def Rules3_Supp(name, fn, onum=0):
                         supports[(b, c, d, e, f, g)] = supports.get((b, c, d, e, f, g), 0) + 1
 
             striples = set()
-        if onums[o] > onum:  # 只考虑o出现次数大于20的三元组
+        if onums[o] > 100:
             striples.add((s, p, o))
         lasts = s
         if len(supports) > 30000 and (ii % 500000 == 0 or len(supports) > 4000000):
@@ -250,7 +240,7 @@ def Rules3_Supp(name, fn, onum=0):
     rules = ljqpy.FreqDict2List(supports)
     rules = [x for x in rules if x[1] > 1][:20000]
     ljqpy.SaveCSV(rules, './rule/%s/rules_3_%s.txt' % (name, name))
-    # ignore the last entity
+
 
 
 def Rules3_Conf(name, fn):
@@ -313,12 +303,25 @@ def get_entity_and_realtion(name, fn, check_data=False):
             s, p, o = GetSPO(zz)
         except:
             continue
-        if ii < 100 and check_data:
+        if ii < 50 and check_data:
             print(s, '**', p, '**', o)
         entitys.add(s)
         relations.add(p)
     return len(entitys), len(relations)
 
+def rule_mining(compress, name):
+    if not os.path.exists('./temp/%s' % name):
+        os.mkdir('./temp/%s' % name)
+    if not os.path.exists('./rule/%s' % name):
+        os.mkdir('./rule/%s' % name)
+    # mining (s, p, o) ->(s, p1, o1)
+    start = time.time()
+    compress.mining_rule_1()
+    # (s, p, x) ->(s, p1, o1)
+    compress.mining_rule_2()
+    # (s, p1, o1)(s, p2, o2) ->(s, p3, o3)
+    compress.mining_rule_3()
+    print('The rule mining process is done! Totoal mining time is：', time.time() - start)
 
 def rerank_rule(name):
     for i in range(3):
@@ -334,21 +337,21 @@ def rerank_rule(name):
 
         if rule_type == 1:
             all_rule.extend(rules_1)
-            print('规则1的条数：', len(all_rule))
+            print('rule 1 count：', len(all_rule))
             all_rule.extend(rules_2)
-            print('规则2的条数：', len(all_rule))
+            print('rule 2 count：', len(all_rule))
 
         if rule_type == 2:
             all_rule.extend(rules_3)
-            print('规则3的条数：', len(all_rule))
+            print('rule 3 count：', len(all_rule))
 
         if rule_type == 3:
             all_rule.extend(rules_1)
-            print('规则1的条数：', len(all_rule))
+            print('rule 1 count：', len(all_rule))
             all_rule.extend(rules_2)
-            print('规则2的条数：', len(all_rule))
+            print('rule 2 count：', len(all_rule))
             all_rule.extend(rules_3)
-            print('规则3的条数：', len(all_rule))
+            print('rule 3 count：', len(all_rule))
 
         all_rule.sort(key=lambda x: (int(x[1]) - (int(x[3]) - int(x[1]))), reverse=True)
 
@@ -358,10 +361,10 @@ def rerank_rule(name):
             ljqpy.SaveCSV(all_rule, './rule/%s/all_rules_rr_details_%s_2.txt' % (name, name))
         if rule_type == 3:
             ljqpy.SaveCSV(all_rule, './rule/%s/all_rules_rr_details_%s.txt' % (name, name))
-    print('规则重排完成')
+    print('rule rerank done!')
 
 
-# 根据置信度和supp数量获取到合适的规则
+
 def get_valid_rules(name, rule_type, rule_thre, rule_num):
     if rule_type == 3:
         valid_rules = ljqpy.LoadCSV('./rule/%s/all_rules_rr_details_%s.txt' % (name, name))
@@ -377,16 +380,16 @@ def get_valid_rules(name, rule_type, rule_thre, rule_num):
         if conf <= 0.5: continue
         if (supp * 2 - cond) < rule_thre: continue
         if rule_num:
-            if len(vrules) > rule_num: break #  考虑规则的个数，用于绘制不同数量规则，对压缩效果的曲线
+            if len(vrules) > rule_num: break
         rr = eval(rr)
         if tuple(rr[-2:]) in used: continue
         used.add(tuple(rr[-2:]))
-        if len(rr) == 4:  # 规则1和2
+        if len(rr) == 4:  # rule 1,2
             cp, co, op, oo = rr
             if co == oo and cp == op: continue
             if co == 'x' and cp == op: continue
             vrules.append([cp, co, op, oo])
-        else:  # 规则3
+        else:  # rule 3
             cp, co, op, oo, dp, do = rr
             if (dp, do) in [(cp, co), (op, oo)]: continue
             vrules.append([cp, co, op, oo, dp, do])
@@ -423,10 +426,9 @@ def compressKB(name, fn, vrules, usefastcheck, onumlim, files):
     """
         originalKB-》compressed KG
     """
-    detailed_rules = {}  # 用来统计每个规则使用的次数
+    detailed_rules = {}
     GetSPO = Config.parse_triple_function(name)
 
-    # 第一次遍历，获取三元组，并统计每一个object对象的出现次数
     onums = defaultdict(int)
     for ii, zz in tqdm(enumerate(ljqpy.LoadListg(fn))):
         try:
@@ -445,7 +447,6 @@ def compressKB(name, fn, vrules, usefastcheck, onumlim, files):
 
     lasts = ''
     striples = set()
-    #  根据规则去压缩知识图谱
     for ii, zz in tqdm(enumerate(ljqpy.LoadListg(fn))):
         try:
             s, p, o = GetSPO(zz)
@@ -469,7 +470,7 @@ def compressKB(name, fn, vrules, usefastcheck, onumlim, files):
                 if usefastcheck and i not in fastset: continue
                 cond = False
                 result = (head, rule[-2], rule[-1])
-                if (len(rule) == 4):  # 规则1和2
+                if (len(rule) == 4):
                     if rule[1] != 'x':
                         condition = (head, rule[0], rule[1])
                         if condition in striples: cond = True
@@ -488,22 +489,18 @@ def compressKB(name, fn, vrules, usefastcheck, onumlim, files):
                     else:
                         if result not in removed:
                             exceptions.add(result)
-            # 将压缩后的三元组写入文件，加上exception，每次写入一次防止太大
             files = write2file(striples, './temp/%s/remained_details_%s.txt' % (name, name), files)
             files = write2file(exceptions, './temp/%s/exceptions_details_%s.txt' % (name, name), files)
-            # 置空方便处理下一个头实体
             striples.clear()
         striples.add((s, p, o))
         lasts = s
-    # 将末尾的triple写入文件
     files = write2file(striples, './temp/%s/remained_details_%s.txt' % (name, name), files)
-    # 将压缩用到的规则写入相应的文件
     simplify_rule = []
-    print("压缩使用的规则数量：" + str(len(detailed_rules.keys())))
+    # print("The count of rules used in the compression：" + str(len(detailed_rules.keys())))
     for rule in vrules:
         if (detailed_rules.get(str(rule), 0) > 0):
             simplify_rule.append(rule)
-    print("存储到文件中的规则数量:" + str(len(simplify_rule)))
+    print("The count of rules used in the compression:" + str(len(simplify_rule)))
     if os.path.exists('./temp/%s/used_rules_details_%s.txt' % (name, name)):
         os.remove(r'./temp/%s/used_rules_details_%s.txt' % (name, name))
     files = write2file(simplify_rule, './temp/%s/used_rules_details_%s.txt' % (name, name), files)
@@ -512,7 +509,7 @@ def compressKB(name, fn, vrules, usefastcheck, onumlim, files):
 
 
 def do_compress_KB(name, fn, rule_type, rule_thre, rule_num, usefastcheck, onumlim, files):
-    # 由于写入文件时添加到末尾，所以每次运行前需要删除
+
     if os.path.exists('./temp/%s/remained_details_%s.txt' % (name, name)):
         os.remove(r'./temp/%s/remained_details_%s.txt' % (name, name))
     if os.path.exists('./temp/%s/exceptions_details_%s.txt' % (name, name)):
@@ -521,20 +518,19 @@ def do_compress_KB(name, fn, rule_type, rule_thre, rule_num, usefastcheck, onuml
         os.remove(r'./temp/%s/exceptions2_details_%s.txt' % (name, name))
     if os.path.exists('./temp/%s/used_rules_details_%s.txt' % (name, name)):
         os.remove(r'./temp/%s/used_rules_details_%s.txt' % (name, name))
-    # 获取初步筛选后有效的规则
+
     valid_rules = get_valid_rules(name, rule_type, rule_thre, rule_num)
     files = compressKB(name, fn, valid_rules, usefastcheck, onumlim, files)
     print('the compression process is complete')
     return files
 
 
-# 根据压缩时的规则和规则特例实现解压，将KB恢复到初始的状态
+
 def decompressKB(name, usefastcheck, used_rules, exceptions, files):
 
     fndc = './temp/%s/remained_details_%s.txt' % (name, name)
     lasts = ''
     striples = set()
-    # 根据获取到的规则和规则特例，将KB解压为初始状态
     fastcheck = set()
     if usefastcheck:
         for rule in used_rules:
@@ -546,8 +542,7 @@ def decompressKB(name, usefastcheck, used_rules, exceptions, files):
     for ii, zz in tqdm(enumerate(ljqpy.LoadCSVg(fndc))):
         s, p, o = zz
         if s != lasts:
-            # 循环遍历
-            head = lasts  # 头实体
+            head = lasts
             skip = False
             if len(fastcheck) > 0:
                 for x in striples:
@@ -560,7 +555,7 @@ def decompressKB(name, usefastcheck, used_rules, exceptions, files):
                 cond = False
                 result = (head, rule[-2], rule[-1])
                 if (len(rule) == 4):
-                    if (rule[1] != 'x'):  # 规则1
+                    if (rule[1] != 'x'):
                         condition = (head, rule[0], rule[1])
                         if condition in striples: cond = True
                     else:
@@ -574,13 +569,10 @@ def decompressKB(name, usefastcheck, used_rules, exceptions, files):
                     if result not in exceptions:
                         striples.add(result)
 
-            # 将解压后的三元组写入文件
             files = write2file(striples, './temp/%s/decompressKB_details_%s.txt' % (name, name), files)
-            # 置空方便处理下一个头实体
             striples.clear()
         striples.add((s, p, o))
         lasts = s
-    # 将末尾的三元组写入文件
     files = write2file(striples, './temp/%s/decompressKB_details_%s.txt' % (name, name), files)
     for file in files.values(): file.close()
     files = {}
@@ -593,7 +585,6 @@ def decompressKB2(name, usefastcheck, used_rules, exceptions, files):
     fndc = './temp/%s/remained_details_%s.txt' % (name, name)
     lasts = ''
     striples = set()
-    # 根据获取到的规则和规则特例，将KB解压为初始状态
 
     fastcheck = set()
     if usefastcheck:
@@ -606,8 +597,7 @@ def decompressKB2(name, usefastcheck, used_rules, exceptions, files):
     for ii, zz in tqdm(enumerate(ljqpy.LoadCSVg(fndc))):
         s, p, o = zz
         if s != lasts:
-            # 循环遍历
-            head = lasts  # 头实体
+            head = lasts
             skip = False
             if len(fastcheck) > 0:
                 for x in striples:
@@ -633,9 +623,8 @@ def decompressKB2(name, usefastcheck, used_rules, exceptions, files):
                 if cond:
                     if result not in exceptions:
                         striples.add(result)
-                        # 将满足条件的三元组加入supp中
                         if (len(rule) == 4):
-                            if (rule[1] != 'x'):  # 规则1
+                            if (rule[1] != 'x'):
                                 condition = (head, rule[0], rule[1])
                                 if condition in striples:
                                     supp.add(condition)
@@ -650,15 +639,12 @@ def decompressKB2(name, usefastcheck, used_rules, exceptions, files):
                                 supp.add(condition_1)
                                 supp.add(condition_2)
 
-            # 将解压后的三元组写入文件
             files = write2file(striples, './temp/%s/decompressKB_details_%s.txt' % (name, name), files)
-            # 置空方便处理下一个头实体
             striples.clear()
         striples.add((s, p, o))
         lasts = s
-    # 将末尾的三元组写入文件
     files = write2file(striples, './temp/%s/decompressKB_details_%s.txt' % (name, name), files)
-    print('the length of cover:', len(supp))
+
     for file in files.values(): file.close()
     # files = {}
 
@@ -678,24 +664,22 @@ def caculate_total_count(name, lenold):
     for ii, zz in enumerate(ljqpy.LoadListg('./temp/%s/used_rules_details_%s.txt' % (name, name))):
         rule_count += 1
     count = remain_count + exception_count + exception2_count + rule_count
-    print("第一次压缩后剩余的三元组个数：" + str(remain_count))
-    print("第一次压缩后exceptions个数：" + str(exception_count))
-    print("第一次解压缩后exceptions个数：" + str(exception2_count))
-    print("第一次压缩后存储的规则个数：" + str(rule_count))
+    print("remained triples after compression: " + str(remain_count))
+    print("the number of exceptions in compression: " + str(exception_count))
+    print("the number of exceptions in decompression: " + str(exception2_count))
+    print("rule count：" + str(rule_count))
     print("The compression result of %s is : %d (%.4f)" % (name, count, count / lenold))
 
 
 def do_decompress_KB(phase, name, fn, files, usefastcheck=True):
 
     if (phase == 1):
-        # 第一次解压缩，扩展exceptions
-        print("***************第一次解压开始")
+        print("*************** first decompression start! ***************")
         if os.path.exists('./temp/%s/decompressKB_details_%s.txt' % (name, name)):
             os.remove(r'./temp/%s/decompressKB_details_%s.txt' % (name, name))
         used_rules, exceptions = get_rules_exceptions(name)
         files = decompressKB(name=name, usefastcheck=usefastcheck, used_rules=used_rules,
                      exceptions=exceptions, files=files)
-        # 原始的wordnet数据
         old = set()
         new = set()
         GetSPO = Config.parse_triple_function(name)
@@ -706,24 +690,23 @@ def do_decompress_KB(phase, name, fn, files, usefastcheck=True):
                 except:
                     print(line)
                     continue
-        print("原文件中的三元组个数：", len(old))
+        print("the number of triples in original_kg: ", len(old))
         lenold = len(old)
         lennew = 0
         for line in ljqpy.LoadCSVg('./temp/%s/decompressKB_details_%s.txt' % (name, name)):
             lennew += 1
             line = tuple(line)
             if line not in old: new.add(line)
-        print("第一次解压后的三元组个数：" + str(lennew))
+        print("the number of triples after 1st decompression: " + str(lennew))
         assert lennew >= lenold
-        print("第一次解压产生的新的规则特例数量：" + str(len(new)))
+        print("exception count in decompression：" + str(len(new)))
         files = write2file(new, './temp/%s/exceptions2_details_%s.txt' % (name, name), files)
-        print('***************第一次解压完成')
+        print('*************** 1st decompression complete! ***************')
         for file in files.values(): file.close()
         return lenold
 
     if (phase == 2):
-        # 第二次解压
-        print("***************第二次解压开始")
+        print("*************** second decompression start! ***************")
         if os.path.exists('./temp/%s/decompressKB_details_%s.txt' % (name, name)):
             os.remove(r'./temp/%s/decompressKB_details_%s.txt' % (name, name))
         used_rules, exceptions = get_rules_exceptions(name)
@@ -733,7 +716,8 @@ def do_decompress_KB(phase, name, fn, files, usefastcheck=True):
         count = 0
         for ii, zz in tqdm(enumerate(ljqpy.LoadListg('./temp/%s/decompressKB_details_%s.txt' % (name, name)))):
             count += 1
-        print("第二次解压后的三元组个数：" + str(count))
-        print('***************第二次解压完成')
+        print("the number of triples after 2nd decompression: " + str(count))
+
+        print('*************** 2nd decompression complete! ***************')
 
 

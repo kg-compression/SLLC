@@ -14,19 +14,18 @@ class Config():
                  'mscg': './dataset/ms_concept_graph_sorted.txt',
                  'MT': './dataset/TermGraph.txt',
                  'freebase': './dataset/sortedfreebase.txt',
-                 'fb15k': './dataset/sortedfb15k.txt',
-                 'fb15k-237': './dataset/sortedfb15k-237.txt',
+                 'fb15k': 'E:/fengjianchuan/code/kb_compress_from_92/kb_compress/dataset/sortedfb15k.txt',
+                 'fb15k-237': 'E:/fengjianchuan/code/kb_compress_from_92/kb_compress/dataset/sortedfb15k-237.txt',
                  'fb5m': './dataset/sortedfb5m.txt',
                  'wc_partof': './dataset/sortedwc_partof.txt',
                  'yago': './dataset/sortedyago.txt',
                  'yago2': './dataset/sortedyago2.txt',
-                 'yago3': 'E:/fengjianchuan/code/kb_compress_from_92/kb_compress/dataset/sortedyago3.txt',
+                 'yago3': './dataset/sortedyago3.txt',
                  'yago4': './dataset/sortedyago4.txt',
-                 'jdk': 'E:/fengjianchuan/code/kb_compress_from_92/kb_compress/dataset/sortedjdk.txt',
+                 'jdk': './dataset/sortedjdk.txt',
+                 'imdb': './dataset/domain_KG/IMDB/imdb_triples.txt'
                  }
-    #
-    # 前者代表三元组spo的o出现的次数，用于筛选三元组
-    # 后者用于规则，代表规则能够真正压缩的三元组个数，二者均用于剪枝加速
+
     onum_rulethre = {
         'conceptnet': [0, 10],
         'wordnet_synset': [0, 2],
@@ -35,7 +34,7 @@ class Config():
         'dbpedia': [0, 5],
         'mscg': [20, 20],
         'MT': [0, 20],
-        'fb15k': [0, 20],
+        'fb15k': [20, 20],
         'fb15k-237': [0, 20],
         'fb5m': [0, 20],
         'freebase': [0, 20],

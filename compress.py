@@ -32,7 +32,7 @@ class Compress:
         print('The mining process of rule_3 done!')
 
     # compress and decompress the KB using the rules mining above
-    def do_compress_decompress(self, rule_type, rule_num, usefastcheck):
+    def do_compress_decompress(self, rule_type=3, rule_num=0, usefastcheck=True):
         # 保存打开的文件对象，这样可以不用频繁的打开和关闭文件，提高代码运行速度
         files = {}
         # 第一次压缩
@@ -56,7 +56,7 @@ class Compress:
 if __name__ == '__main__':
 
     # 需要处理的kg
-    name = 'jdk'
+    name = 'fb15k'
     # 获取kg文件的存放位置
     kg_file = Config.data_path[name]
     # 三元组spo中o出现的次数阈值
@@ -72,19 +72,19 @@ if __name__ == '__main__':
         os.mkdir('./temp/%s' % name)
     if not os.path.exists('./rule/%s' % name):
         os.mkdir('./rule/%s' % name)
-    # # 挖掘第一类规则
-    # start = time.time()
-    # compress.mining_rule_1()
-    # # 挖掘第二类规则
-    # compress.mining_rule_2()
-    # # 挖掘第三类规则
-    # compress.mining_rule_3()
-    # print('总的挖掘时间：', time.time() - start)
-    # # 按可压缩的三元组个数从大到小排序
-    # functions.rerank_rule(name)
+    # 挖掘第一类规则
+    start = time.time()
+    compress.mining_rule_1()
+    # 挖掘第二类规则
+    compress.mining_rule_2()
+    # 挖掘第三类规则
+    compress.mining_rule_3()
+    print('总的挖掘时间：', time.time() - start)
+    # 按可压缩的三元组个数从大到小排序
+    functions.rerank_rule(name)
 
     # 需要配置压缩解压的一些参数，主要用于实验分析
     rule_type = 3  # rule_type代表用哪一类规则，1代表body长度为1，2代表body长度为2，3代表所有规则
-    rule_num = 0  # 选取可用规则的条数
+    rule_num = 0  # 选取规则的条数 0 means use all rules
     # 根据规则压缩KG，并且实现KG的解压缩
     compress.do_compress_decompress(rule_type=rule_type, rule_num=rule_num, usefastcheck=True)
