@@ -22,7 +22,7 @@ the code of paper
     do_compress_KB---compression
     do_decompress_KB---decompression
 
-#   *运行流程*
+#   *running process*
     1、sort the kg by head entity, and put the sorted kg data into './dataset'
     2、add config info in config.py
     3、python run.py, and the temp output and the rule used in the compression process is in './temp' and './rule' respectively
